@@ -81,7 +81,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
         #單次優化
         optimizer.step()
 #評估
-def test(args, model, device, test_loader, epoch):
+def test(args, model, device, test_loader, epoch=10):
 #===================================繪製分部圖=========================================
 #    import random
 #    try: from sklearn.manifold import TSNE; HAS_SK = True
@@ -117,6 +117,7 @@ def test(args, model, device, test_loader, epoch):
     print('Epochs {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'
           .format(epoch, test_loss, correct, len(test_loader.dataset),
                   100. * correct / len(test_loader.dataset)))
+    return test_loss;
     
 def plot_with_labels(lowDWeights, labels):
     from matplotlib import cm
@@ -130,7 +131,7 @@ def input_image(model, image, device):
 #   評估模式
     model.eval()
     k = image.view(1, 1, 28, 28)
-    x, y = model(k.cuda())
+    x, y = model(k.to(device) )  
 #    print(image)
 #    print(k.size())    
 #    print(x)
@@ -140,7 +141,7 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
     parser.add_argument('--batch_size', type=int, default=640, metavar='N')
-    parser.add_argument('--test_batch_size', type=int, default=2000, metavar='N')
+    parser.add_argument('--test_batch_size', type=int, default=200, metavar='N')
     parser.add_argument('--epochs', type=int, default=10, metavar='N')
     parser.add_argument('--lr', type=float, default=0.01, metavar='LR')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M')
@@ -154,12 +155,13 @@ def main():
     #使用CPU還是GPU
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     #轉變型態
-    device = torch.device("cuda" if use_cuda else "cpu")    
+    device = torch.device("cuda" if use_cuda else "cpu")
+    print(device);    
     kwargs = {'num_workers': 5, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
             datasets.MNIST('../data',                                   #MNIST資料儲存位置
                            train=True,                                  #是要traindata(60000)還是testdata(10000)
-                           download=False,                              #是否要下載
+                           download=True,                              #是否要下載
                        transform=transforms.Compose([
                            transforms.ToTensor(),                       #將資料改成Tensor型態(將資料壓縮到0,1)
                            transforms.Normalize((0.1307,), (0.3081,))   #正規化
@@ -179,7 +181,7 @@ def main():
     model = Net().to(device)
     print(model)
 #    讀取訓練過的模塊
-#    model = torch.load('net1.pkl').to(device)   
+#    model = torch.load('CNNnet1.pkl').to(device)   
 #    plt.ion()    
 #============== Train & Test ==============
 #   優化學習
@@ -187,34 +189,38 @@ def main():
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
         #如果test_loss<0.04則停止訓練
-        if test(args, model, device, test_loader) < 0.04:
+        if test(args, model, device, test_loader,epoch) < 0.04:
            break
 #   存取神經網路
-    torch.save(model, 'net1.pkl')      
+    torch.save(model, 'CNNnet1.pkl')      
 #==========================================
 #    plt.ioff()
 #============== Test image ==============  
-#    測試圖
+##    測試圖
 #    img, label = test_set[0]
-#    讀圖
-#    img = cv2.imread('3.jpg')
-#    轉向，將(28*28*3)轉成(3*28*28)
+##    讀圖
+#    filename=input("請輸入要測試檔名:")
+#    img = cv2.imread(filename)
+##    轉向，將(28*28*3)轉成(3*28*28)
 #    img = img.transpose(2,0,1)
-#    擷取第一層圖片
+##    擷取第一層圖片
 #    img = img[0].transpose(0, 1)
-#    升維
+##    升維
 #    img = np.expand_dims(img, axis=0)
 #    first_train_img = np.reshape(img, (28, 28))
-#    劃出圖片    
+##    劃出圖片    
 #    plt.matshow(first_train_img, cmap = plt.get_cmap('gray'))
 #    plt.show()
-#    numpy轉成Tensor(張量)
+##    numpy轉成Tensor(張量)
 #    img = torch.from_numpy(img).float().to(device)
-#    圖片判讀
+##    圖片判讀
 #    input_image(model, img, device)
 #==========================================
 if __name__ == '__main__':
     main()
+
+
+
 
 
 
